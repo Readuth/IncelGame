@@ -13,19 +13,21 @@
 #include <iterator>
 using namespace std;    
 
+#define screenWidth 500
+#define screenHeight 500
 #define mapWidth 10
 #define mapHeight 10
 int mapArray[mapWidth][mapHeight] = {
     
             {1,1,1,1,1,1,1,1,1,1},
-            {1,1,0,0,0,0,0,0,1,1},
             {1,0,0,0,0,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,1},
-            {1,1,0,0,0,0,0,0,1,1},
+            {1,0,0,0,0,0,0,0,0,1},
+            {1,0,0,0,0,0,0,0,0,1},
             {1,1,1,1,1,1,1,1,1,1} 
 
     };
@@ -40,8 +42,6 @@ struct {
 //Draw the player-------------------------------
 void drawPlayer(){
     DrawRectangle(player.x-5, player.y-5, 10, 10, WHITE);
-    player.dx=cos(player.a)*5;
-    player.dy=sin(player.a)*5;
 }
 
 //Draw the Map-----------------------------------
@@ -65,7 +65,9 @@ void drawMap(bool debugMode){
 
         //Debug info  
         ++iterations;
-        //cout << "Coords: " + to_string(x) + " " + to_string(y) + " Map data: " + to_string(mapArray[x][y]) + " Iterations: " + to_string(iterations) + "\n";
+        if(debugMode == true){
+            cout << "Coords: " + to_string(x) + " " + to_string(y) + " Map data: " + to_string(mapArray[x][y]) + " Iterations: " + to_string(iterations) + "\n";
+        }
 
         //Increment the appropriate coordinates        
         if(y == mapHeight-1 && x == mapWidth-1){
@@ -81,39 +83,69 @@ void drawMap(bool debugMode){
     
 }
 
+float endPosX,endPosY;
+int linesIndex;
+int lines[500];
+Vector2 startPos;
+Vector2 rayDir;
+
 //Draw the player angle----------------------------------
-void drawPlayerAngle(){
-    float endPosX,endPosY;
-    Vector2 startPos = {player.x,player.y};
-    Vector2 rayDir = {player.x+player.dx*10,player.y+player.dy*10};
-    DrawLineV(startPos, rayDir, WHITE);
+void drawPlayerAngle(bool draw){
+
+    for(int t = -250; t < 250; t++){
+    player.dx=cos(player.a + (t/(PI*250)))*10;
+    player.dy=sin(player.a + (t/(PI*250)))*10;
+    linesIndex = t+250;
+    
+        for(int i = 0; i < 50; i++){
+        
+            int rayLength = i;
+            endPosX = player.x+player.dx*rayLength;
+            endPosY = player.y+player.dy*rayLength;
+            int endPosGridX = round(endPosX/10);
+            int endPosGridY = round(endPosY/10);
+
+            if(endPosGridX%5 == 0 || endPosGridY%5 == 0){ 
+                if(mapArray[(endPosGridX) / 5][(endPosGridY) / 5] != 0){
+                    startPos = {player.x,player.y};
+                    rayDir = {endPosX, endPosY};
+                    lines[linesIndex] = i;
+                    break;
+                }
+            }
+        }
+        if(draw == true){
+            DrawLineV(startPos, rayDir, YELLOW);
+        }
+    }
 }
 
 //Draw rays------------------------------------------------------------
 void drawRays(){
-    float endPosX,endPosY;
-    Vector2 startPos = {player.x,player.y};
-    Vector2 rayDir = {player.x+player.dx*10,player.y+player.dy*10};
-
+    for(int i = 0; i < 500; i++){
+        char unsigned shading = 255 - lines[i];
+        Color wallColor = {shading, shading, shading, 255}; 
+        DrawLine(i, (500 - lines[i]), i, 10+lines[i], wallColor);
+    }
 }
 
-//Draw map view-----------------------------------
+//Draw map view------------------------------------
 void drawMapView(){
-    drawMap(true);
+    drawMap(false);
     DrawFPS(0, 0);
     drawPlayer();
-    drawPlayerAngle();
+    drawPlayerAngle(true);
 }
 
 //Draw player view--------------------------------------------------
 void drawPlayerView(){
+    drawPlayerAngle(false);
     drawRays();
-    
 }
 
 void init(){
     //Initialize window---------------------------
-    InitWindow(500, 500, "Cool Game");
+    InitWindow(screenWidth, screenHeight, "Cool Game");
     SetTargetFPS(60);
     //Initialize cursor--------------------
     EnableCursor();  
@@ -128,9 +160,6 @@ void init(){
 int main(){
   //Initialize
   init();
-  
-  int screenWidth = GetScreenWidth();
-  int screenHeight = GetScreenHeight();
 
 
   //While window is active -------------------
@@ -141,7 +170,6 @@ int main(){
     bool sPressed;
     bool aPressed;
     bool dPressed;
-    bool spacePressed;
 
     if(IsKeyDown(KEY_W)==true){
         wPressed = true;
@@ -182,10 +210,11 @@ int main(){
     } else if (aPressed == true){
         player.x = player.x - 1;
     }
+
     //Mouse movement---------------------------
     int t = mouseX*360;
     int t2 = t/screenWidth;
-    player.a =t2*PI/180;
+    player.a = t2*PI/180;
     //Draws the screen---------------------
     BeginDrawing();
 
