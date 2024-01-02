@@ -22,7 +22,7 @@ int mapArray[mapWidth][mapHeight] = {
             {1,1,1,1,1,1,1,1,1,1},
             {1,0,0,0,0,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,1},
+            {1,0,0,0,0,1,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,1},
@@ -102,11 +102,13 @@ void drawPlayerAngle(bool draw){
             int rayLength = i;
             endPosX = player.x+player.dx*rayLength;
             endPosY = player.y+player.dy*rayLength;
-            int endPosGridX = round(endPosX/10);
-            int endPosGridY = round(endPosY/10);
+            int endPosGridX1 = round(endPosX/10);
+            int endPosGridY1 = round(endPosY/10);
+            int endPosGridX2 = round(endPosX/10)-1;
+            int endPosGridY2 = round(endPosY/10)-1;
 
-            if(endPosGridX%5 == 0 || endPosGridY%5 == 0){ 
-                if(mapArray[(endPosGridX) / 5][(endPosGridY) / 5] != 0){
+            if((endPosGridX1%5 == 0 || endPosGridY1%5 == 0)){ 
+                if((mapArray[(endPosGridX1) / 5][(endPosGridY1) / 5] != 0)||(mapArray[(endPosGridX2) / 5][(endPosGridY2) / 5] != 0)){
                     startPos = {player.x,player.y};
                     rayDir = {endPosX, endPosY};
                     lines[linesIndex] = i;
@@ -128,6 +130,11 @@ void drawRays(){
         DrawLine(i, (500 - lines[i]), i, 10+lines[i], wallColor);
     }
 }
+//Draw UI------------------------------------------------------------
+void drawUI(){
+    Texture2D texture = LoadTexture("/home/noahreed/Desktop/Code/IncelGame/src/sprites/Pistol/Pistol.png");
+    DrawTexture(texture, 200, 350, WHITE);
+}
 
 //Draw map view------------------------------------
 void drawMapView(){
@@ -141,6 +148,7 @@ void drawMapView(){
 void drawPlayerView(){
     drawPlayerAngle(false);
     drawRays();
+    drawUI();
 }
 
 void init(){
@@ -157,6 +165,7 @@ void init(){
     player.a = 0;
 }
 
+//Main game loop-----------------------------------------------------------------------------------
 int main(){
   //Initialize
   init();
@@ -201,14 +210,26 @@ int main(){
     }
     //Movement-------------------------
     if(wPressed == true){
-        player.y = player.y - 1;
+        player.dx=cos(player.a);
+        player.dy=sin(player.a);
+        player.x += player.dx;
+        player.y += player.dy;
     } else if (sPressed == true){
-        player.y = player.y + 1;
+        player.dx=cos(player.a);
+        player.dy=sin(player.a);
+        player.x -= player.dx;
+        player.y -= player.dy;
     }
     if(dPressed == true){
-        player.x = player.x + 1;
+        player.dx=cos(player.a + PI/2);
+        player.dy=sin(player.a + PI/2);
+        player.x += player.dx;
+        player.y += player.dy;
     } else if (aPressed == true){
-        player.x = player.x - 1;
+        player.dx=cos(player.a + PI/2);
+        player.dy=sin(player.a + PI/2);
+        player.x -= player.dx;
+        player.y -= player.dy;
     }
 
     //Mouse movement---------------------------
@@ -218,7 +239,7 @@ int main(){
     //Draws the screen---------------------
     BeginDrawing();
 
-    drawMapView();
+    drawMapView(); 
     //drawPlayerView();
 
     ClearBackground(BLACK);  
